@@ -1,4 +1,4 @@
-package com.flight.antirecommender;
+package com.flight.antirecommender.entity;
 
 import java.util.Comparator;
 import java.util.List;

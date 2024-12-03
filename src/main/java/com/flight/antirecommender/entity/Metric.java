@@ -1,4 +1,4 @@
-package com.flight.antirecommender;
+package com.flight.antirecommender.entity;
 
 /**
  * @author FLIGHT

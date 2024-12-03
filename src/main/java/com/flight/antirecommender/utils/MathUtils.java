@@ -1,4 +1,4 @@
-package com.flight.antirecommender;
+package com.flight.antirecommender.utils;
 
 import java.util.Map;
 

@@ -1,5 +1,10 @@
-package com.flight.antirecommender;
+package com.flight.antirecommender.processing;
 
+import com.flight.antirecommender.data.AntiRecommenderConfig;
+import com.flight.antirecommender.data.CandidateOptions;
+import com.flight.antirecommender.data.FeatureOptions;
+import com.flight.antirecommender.entity.StepsAndMetrics;
+import com.flight.antirecommender.entity.StepsAndScore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,48 +16,33 @@ import java.util.List;
  * @author FLIGHT
  */
 
-public class ScoreComputer {
+public class AntiRecommenderProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(ScoreComputer.class);
+  private static final Logger logger = LoggerFactory.getLogger(AntiRecommenderProcessor.class);
 
-  private final int CANDIDATES_SELECTION_LIMIT = 10;
+  private final ScoreComputer scoreComputer;
 
-  private final int AFTER_CANDIDATES_SELECTION_LIMIT = 500;
-
-  private final int FEATURE_SELECTION_LIMIT = 3;
-
-  private final int AFTER_FEATURE_SELECTION_LIMIT = 500;
-
-  public StepsAndScore findWinner() {
-    List<StepsAndMetrics> candidates = findCandidates();
-    StepsAndScore winner = findWinner(candidates);
-
-    logger.info("Winner: {}", winner.toString());
-
-    return winner;
+  public AntiRecommenderProcessor(ScoreComputer scoreComputer) {
+    this.scoreComputer = scoreComputer;
   }
 
-  private List<StepsAndMetrics> findCandidates() {
+  public List<StepsAndScore> findTopScored() {
     // 1 step
     List<StepsAndMetrics> afterCandidatesSelection = selectCandidates();
     logger.info("{} candidates after candidates selection", afterCandidatesSelection.size());
 
     // 2 step
-    List<StepsAndMetrics> afterFeatureSelection = selectFeatures(afterCandidatesSelection);
+    List<StepsAndScore> afterFeatureSelection = selectFeatures(afterCandidatesSelection);
     logger.info("{} candidates after technical limitations", afterFeatureSelection.size());
 
-    // 3 step
-    List<StepsAndMetrics> afterTechnicalLimitations = selectTechnicalLimitations();
-    logger.info("{} candidates after technical limitations", afterTechnicalLimitations.size());
-
-    return afterTechnicalLimitations;
+    return afterFeatureSelection;
   }
 
   private List<StepsAndMetrics> selectCandidates() {
-    CandidateOptions[] candidatePool = CandidateOptions.values();
+    CandidateOptions[] candidatePool = CandidateOptions.activeCandidateSelectors;
     List<List<CandidateOptions>> combinations = CombinationsGenerator.generateCombinations(
       candidatePool,
-      CANDIDATES_SELECTION_LIMIT
+      AntiRecommenderConfig.CANDIDATES_SELECTION_LIMIT
     );
 
     List<StepsAndMetrics> candidateStepsAndMetrics = new ArrayList<>();
@@ -64,18 +54,18 @@ public class ScoreComputer {
 
     List<StepsAndMetrics> limitedCandidates = candidateStepsAndMetrics.stream()
       .sorted(Comparator.comparing(StepsAndMetrics::toScore).reversed())
-      .limit(AFTER_CANDIDATES_SELECTION_LIMIT)
+      .limit(AntiRecommenderConfig.AFTER_CANDIDATES_SELECTION_LIMIT)
       .toList();
 
     logger.info("limited candidates size: {}", limitedCandidates.size());
     return limitedCandidates;
   }
 
-  private List<StepsAndMetrics> selectFeatures(List<StepsAndMetrics> candidates) {
+  private List<StepsAndScore> selectFeatures(List<StepsAndMetrics> candidates) {
     FeatureOptions[] featurePool = FeatureOptions.values();
     List<List<FeatureOptions>> combinations = CombinationsGenerator.generateCombinations(
       featurePool,
-      FEATURE_SELECTION_LIMIT
+      AntiRecommenderConfig.FEATURE_SELECTION_LIMIT
     );
 
     List<StepsAndMetrics> afterFeaturesApplying = new ArrayList<>();
@@ -89,22 +79,12 @@ public class ScoreComputer {
     }
 
     List<StepsAndScore> limitedCandidatesWithFeatures = afterFeaturesApplying.stream()
-      .sorted(Comparator.comparing(StepsAndMetrics::toScore).reversed())
-      .limit(AFTER_FEATURE_SELECTION_LIMIT)
-      .map(i -> new StepsAndScore(i.steps(), i.toScore()))
+      .map(scoreComputer::compute)
+      .sorted(Comparator.comparing(StepsAndScore::score).reversed())
+      .limit(AntiRecommenderConfig.AFTER_FEATURE_SELECTION_LIMIT)
       .toList();
 
     logger.info("limited features size: {}", limitedCandidatesWithFeatures.size());
-    return new ArrayList<>();
-  }
-
-  private List<StepsAndMetrics> selectTechnicalLimitations() {
-    return new ArrayList<>();
-  }
-
-  private StepsAndScore findWinner(List<StepsAndMetrics> candidates) {
-    return candidates.stream()
-      .map(candidate -> new StepsAndScore(candidate.steps(), candidate.toScore()))
-      .max(Comparator.comparing(StepsAndScore::score)).orElseThrow(RuntimeException::new);
+    return limitedCandidatesWithFeatures;
   }
 }

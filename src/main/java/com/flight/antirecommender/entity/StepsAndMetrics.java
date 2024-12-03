@@ -1,12 +1,19 @@
-package com.flight.antirecommender;
+package com.flight.antirecommender.entity;
+
+import com.flight.antirecommender.data.CandidateOptions;
+import com.flight.antirecommender.data.FeatureOptions;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author FLIGHT
  */
-public record StepsAndMetrics(Steps steps, Map<Metric, MetricSumAndCoefficient> metricSumAndCoefficient) {
+public record StepsAndMetrics(
+  Steps steps,
+  Set<CandidateOptions> appliedCandidates,
+  Set<FeatureOptions> appliedFeatures,
+  Map<Metric, MetricSumAndCoefficient> metricSumAndCoefficient)
+{
 
   public StepsAndMetrics copy() {
     Map<Metric, MetricSumAndCoefficient> metricsCopy = new HashMap<>();
@@ -17,16 +24,24 @@ public record StepsAndMetrics(Steps steps, Map<Metric, MetricSumAndCoefficient> 
 
     return new StepsAndMetrics(
       steps.copy(),
+      new HashSet<>(appliedCandidates),
+      new HashSet<>(appliedFeatures),
       metricsCopy);
   }
 
   public static StepsAndMetrics empty() {
-    return new StepsAndMetrics(new Steps(new ArrayList<>()), new HashMap<>());
+    return new StepsAndMetrics(
+      new Steps(new ArrayList<>()),
+      new HashSet<>(),
+      new HashSet<>(),
+      new HashMap<>()
+    );
   }
 
   public void applyCandidates(List<CandidateOptions> candidateOptions) {
     Step step = Step.createFrom(candidateOptions);
     steps.addStep(step);
+    appliedCandidates.addAll(candidateOptions);
 
     for (CandidateOptions candidateOption : candidateOptions) {
       List<MetricAndSumDelta> metricAndSumDeltaList = candidateOption.getMetricAndSumDelta();
@@ -43,11 +58,13 @@ public record StepsAndMetrics(Steps steps, Map<Metric, MetricSumAndCoefficient> 
   public void applyFeatures(List<FeatureOptions> featureOptions) {
     Step step = Step.createFrom(featureOptions);
     steps.addStep(step);
+    appliedFeatures.addAll(featureOptions);
 
     for (FeatureOptions featureOption : featureOptions) {
       List<MetricAndCoefficientDelta> metricAndCoefficientDeltaList = featureOption.getMetricAndCoefficientDelta();
       for (MetricAndCoefficientDelta metricAndCoefficientDelta : metricAndCoefficientDeltaList) {
-        MetricSumAndCoefficient metricResults = metricSumAndCoefficient.computeIfAbsent(metricAndCoefficientDelta.metric(),
+        MetricSumAndCoefficient metricResults = metricSumAndCoefficient.computeIfAbsent(
+          metricAndCoefficientDelta.metric(),
           unused -> MetricSumAndCoefficient.empty()
         );
         metricResults.update(metricAndCoefficientDelta.coefficientDelta());
@@ -55,11 +72,22 @@ public record StepsAndMetrics(Steps steps, Map<Metric, MetricSumAndCoefficient> 
     }
   }
 
+  public void applyCombinations(List<MetricAndSumDelta> metricAndSumDeltaList) {
+    for (MetricAndSumDelta metricAndSumDelta : metricAndSumDeltaList) {
+      MetricSumAndCoefficient metricResult = metricSumAndCoefficient.computeIfAbsent(
+        metricAndSumDelta.metric(),
+        unused -> MetricSumAndCoefficient.empty()
+      );
+
+      metricResult.update(metricAndSumDelta.sumDelta());
+    }
+  }
+
   public int toScore() {
-    return metricSumAndCoefficient.values().stream()
-      .map(sumAndCoefficient -> sumAndCoefficient.getCoefficient() * sumAndCoefficient.getSum())
-      .map(Math::floor)
-      .map(Double::intValue)
-      .reduce(0, Integer::sum);
+    double score = metricSumAndCoefficient.values().stream()
+      .map(sumAndCoefficient -> sumAndCoefficient.getSum() * sumAndCoefficient.getCoefficient())
+      .reduce(0.0, Double::sum);
+
+    return (int) Math.round(score);
   }
 }
