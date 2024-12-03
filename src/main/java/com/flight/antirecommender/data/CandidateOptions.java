@@ -171,7 +171,7 @@ public enum CandidateOptions implements WithTitle, WithId {
     this.metricAndSumDelta = metricAndSumDelta;
   }
 
-  public static CandidateOptions[] activeCandidateSelectors =
+  public static final CandidateOptions[] activeCandidateSelectors =
     {
       WATCHED_AUTHORS
       , CATS

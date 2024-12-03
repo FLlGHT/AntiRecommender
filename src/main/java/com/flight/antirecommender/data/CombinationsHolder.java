@@ -36,7 +36,7 @@ public class CombinationsHolder {
         .addOption(CandidateOptions.POPULAR)
         .addOption(CandidateOptions.GAME_VIDEOS)
         .addReward(MetricAndSumDelta.of(Metric.CLICKS, 20))
-        .addReward(MetricAndSumDelta.of(Metric.AUTHORS_SATISFACTION, 10))
+        .addReward(MetricAndSumDelta.of(Metric.AUTHORS_SATISFACTION, -10))
         .build(),
 
       // 4
@@ -67,8 +67,8 @@ public class CombinationsHolder {
       CandidateCombination.builder()
         .addOption(CandidateOptions.MUSIC_CLIPS)
         .addOption(CandidateOptions.SHOWS)
-        .addReward(MetricAndSumDelta.of(Metric.RELEVANCE, 15))
-        .addReward(MetricAndSumDelta.of(Metric.LIKES, -5))
+        .addReward(MetricAndSumDelta.of(Metric.VIEW_TIME, 15))
+        .addReward(MetricAndSumDelta.of(Metric.AUTHORS_SATISFACTION, -5))
         .build(),
 
 

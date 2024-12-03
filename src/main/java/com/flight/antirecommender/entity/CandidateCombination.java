@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * @author FLIGHT
  */
-public record CandidateCombination(Set<CandidateOptions> options, List<MetricAndSumDelta> reward) {
+public record CandidateCombination(Set<CandidateOptions> сandidateOptions, List<MetricAndSumDelta> reward) {
 
   public static Builder builder() {
     return new Builder();

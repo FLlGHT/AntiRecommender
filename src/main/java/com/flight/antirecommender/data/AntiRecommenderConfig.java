@@ -7,7 +7,9 @@ public class AntiRecommenderConfig {
 
   public static final int CANDIDATES_SELECTION_LIMIT = 7;
 
-  public static final int AFTER_CANDIDATES_SELECTION_LIMIT = 12500;
+  public static final int BATCH_SIZE = 5000;
+
+  public static final int AFTER_CANDIDATES_SELECTION_LIMIT = 1_000_000;
 
   public static final int FEATURE_SELECTION_LIMIT = 3;
 

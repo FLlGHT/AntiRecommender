@@ -27,15 +27,26 @@ public class AntiRecommenderProcessor {
   }
 
   public List<StepsAndScore> findTopScored() {
-    // 1 step
     List<StepsAndMetrics> afterCandidatesSelection = selectCandidates();
     logger.info("{} candidates after candidates selection", afterCandidatesSelection.size());
 
-    // 2 step
-    List<StepsAndScore> afterFeatureSelection = selectFeatures(afterCandidatesSelection);
-    logger.info("{} candidates after technical limitations", afterFeatureSelection.size());
+    int batchSize = AntiRecommenderConfig.BATCH_SIZE;
+    int batchCount = (afterCandidatesSelection.size() + batchSize - 1) / batchSize;
+    logger.info("batch size: {}, batch count: {}", batchSize, batchCount);
+    List<StepsAndScore> bestFromEachBatch = new ArrayList<>();
 
-    return afterFeatureSelection;
+    for (int batchNumber = 0; batchNumber < batchCount; ++batchNumber) {
+      int fromIndex = batchNumber * batchSize;
+      int toIndex = Math.min(fromIndex + batchSize, afterCandidatesSelection.size());
+      List<StepsAndMetrics> candidatesToProcess = afterCandidatesSelection.subList(fromIndex, toIndex);
+      List<StepsAndScore> afterFeatureSelectionInBatch = selectFeatures(candidatesToProcess);
+      bestFromEachBatch.add(afterFeatureSelectionInBatch.get(0));
+      logger.info("{} batch processed", batchNumber + 1);
+    }
+
+    return bestFromEachBatch.stream()
+      .sorted(Comparator.comparing(StepsAndScore::score).reversed())
+      .toList();
   }
 
   private List<StepsAndMetrics> selectCandidates() {

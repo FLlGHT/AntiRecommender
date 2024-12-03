@@ -12,7 +12,7 @@ import java.util.List;
 public record CandidateFeatureCombination(
   CandidateOptions candidateOption,
   FeatureOptions featureOption,
-  List<MetricAndSumDelta> metricAndSumDelta) {
+  List<MetricAndSumDelta> reward) {
 
   public static Builder builder() {
     return new Builder();
@@ -46,7 +46,8 @@ public record CandidateFeatureCombination(
       return new CandidateFeatureCombination(
         candidateOption,
         featureOption,
-        rewards);
+        rewards
+      );
     }
   }
 }
