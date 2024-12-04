@@ -16,7 +16,7 @@ public class CombinationsApplier {
 
   public void apply(StepsAndMetrics stepsAndMetrics) {
     for (CandidateCombination candidateSelectorsCandidateCombination : CombinationsHolder.candidateCombinations()) {
-      Set<CandidateOptions> options = candidateSelectorsCandidateCombination.сandidateOptions();
+      Set<CandidateOptions> options = candidateSelectorsCandidateCombination.candidateOptions();
       if (stepsAndMetrics.appliedCandidates().containsAll(options)) {
         stepsAndMetrics.applyCombinations(candidateSelectorsCandidateCombination.reward());
       }

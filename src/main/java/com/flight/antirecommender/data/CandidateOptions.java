@@ -166,9 +166,15 @@ public enum CandidateOptions implements WithTitle, WithId {
 
   private final List<MetricAndSumDelta> metricAndSumDelta;
 
+  private final int memory;
+
+  private final int time;
+
   CandidateOptions(int memory, int time, String title, List<MetricAndSumDelta> metricAndSumDelta) {
     this.title = title;
     this.metricAndSumDelta = metricAndSumDelta;
+    this.memory = memory;
+    this.time = time;
   }
 
   public static final CandidateOptions[] activeCandidateSelectors =
@@ -200,7 +206,7 @@ public enum CandidateOptions implements WithTitle, WithId {
       , ARCHIVE
       , PATTERN_SEARCH
       , HISTORIC
-//      , CREATIVE_NEW
+      , CREATIVE_NEW
       , EVENTS_REVIEW
       , TECHNO
     };
@@ -217,5 +223,13 @@ public enum CandidateOptions implements WithTitle, WithId {
   @Override
   public int getId() {
     return this.ordinal();
+  }
+
+  public int getMemory() {
+    return memory;
+  }
+
+  public int getTime() {
+    return time;
   }
 }

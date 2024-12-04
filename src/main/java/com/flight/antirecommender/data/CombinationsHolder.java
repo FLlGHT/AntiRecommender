@@ -57,7 +57,7 @@ public class CombinationsHolder {
 
       // 6
       CandidateCombination.builder()
-        .addOption(CandidateOptions.HISTORIC)
+        .addOption(CandidateOptions.WATCH_HISTORY)
         .addOption(CandidateOptions.COMEDY)
         .addReward(MetricAndSumDelta.of(Metric.RELEVANCE, 5))
         .addReward(MetricAndSumDelta.of(Metric.LIKES, -10))

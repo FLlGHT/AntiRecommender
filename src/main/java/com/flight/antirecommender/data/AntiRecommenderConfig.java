@@ -5,7 +5,7 @@ package com.flight.antirecommender.data;
  */
 public class AntiRecommenderConfig {
 
-  public static final int CANDIDATES_SELECTION_LIMIT = 7;
+  public static final int CANDIDATES_SELECTION_LIMIT = 8;
 
   public static final int BATCH_SIZE = 5000;
 

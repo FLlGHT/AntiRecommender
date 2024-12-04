@@ -21,6 +21,11 @@ public class ScoreComputer {
       .map(sumAndCoefficient -> sumAndCoefficient.getSum() * sumAndCoefficient.getCoefficient())
       .reduce(0.0, Double::sum);
 
-    return new StepsAndScore(stepsAndMetrics.steps(), (int) Math.round(score));
+    return new StepsAndScore(
+      stepsAndMetrics.steps(),
+      stepsAndMetrics.appliedCandidates(),
+      stepsAndMetrics.appliedFeatures(),
+      (int) Math.round(score)
+    );
   }
 }

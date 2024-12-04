@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author FLIGHT
@@ -40,7 +41,8 @@ public class AntiRecommenderProcessor {
       int toIndex = Math.min(fromIndex + batchSize, afterCandidatesSelection.size());
       List<StepsAndMetrics> candidatesToProcess = afterCandidatesSelection.subList(fromIndex, toIndex);
       List<StepsAndScore> afterFeatureSelectionInBatch = selectFeatures(candidatesToProcess);
-      bestFromEachBatch.add(afterFeatureSelectionInBatch.get(0));
+      Optional<StepsAndScore> bestFitsInBatch = selectFirstFits(afterFeatureSelectionInBatch);
+      bestFitsInBatch.ifPresent(bestFromEachBatch::add);
       logger.info("{} batch processed", batchNumber + 1);
     }
 
@@ -73,7 +75,7 @@ public class AntiRecommenderProcessor {
   }
 
   private List<StepsAndScore> selectFeatures(List<StepsAndMetrics> candidates) {
-    FeatureOptions[] featurePool = FeatureOptions.values();
+    FeatureOptions[] featurePool = FeatureOptions.activeFeatureOptions;
     List<List<FeatureOptions>> combinations = CombinationsGenerator.generateCombinations(
       featurePool,
       AntiRecommenderConfig.FEATURE_SELECTION_LIMIT
@@ -97,5 +99,27 @@ public class AntiRecommenderProcessor {
 
     logger.info("limited features size: {}", limitedCandidatesWithFeatures.size());
     return limitedCandidatesWithFeatures;
+  }
+
+  private Optional<StepsAndScore> selectFirstFits(List<StepsAndScore> candidates) {
+    for (StepsAndScore candidate : candidates) {
+      int candidateMemory = 0, candidateTime = 0;
+      for (CandidateOptions appliedCandidate : candidate.appliedCandidates()) {
+        candidateMemory += appliedCandidate.getMemory();
+        candidateTime += appliedCandidate.getTime();
+      }
+      int featureMemory = 0, featureTime = 0;
+      for (FeatureOptions appliedFeature : candidate.appliedFeatures()) {
+        featureMemory += appliedFeature.getMemory();
+        featureTime += appliedFeature.getTime();
+      }
+
+      boolean fitsByMemory = candidateMemory + featureMemory <= AntiRecommenderConfig.MEMORY_LIMIT;
+      boolean fitsByTime = candidateTime + featureTime <= AntiRecommenderConfig.TIME_LIMIT;
+
+      if (fitsByMemory && fitsByTime)
+        return Optional.of(candidate);
+    }
+    return Optional.empty();
   }
 }
